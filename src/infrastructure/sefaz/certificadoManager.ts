@@ -1,7 +1,12 @@
 import fs from 'fs';
 import https from 'https';
 
-export function createHttpsAgent({ certPfxPath, certPassphrase }) {
+interface CreateHttpsAgentParams {
+  certPfxPath: string;
+  certPassphrase: string;
+}
+
+export function createHttpsAgent({ certPfxPath, certPassphrase }: CreateHttpsAgentParams): any {
   return new https.Agent({
     pfx: fs.readFileSync(certPfxPath),
     passphrase: certPassphrase,

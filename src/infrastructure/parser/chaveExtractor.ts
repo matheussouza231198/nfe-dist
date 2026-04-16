@@ -1,4 +1,4 @@
-export function extrairChaveNfe(xml) {
+export function extrairChaveNfe(xml: string): string | null {
   const byTag = xml.match(/<chNFe>(\d{44})<\/chNFe>/);
   if (byTag) return byTag[1];
 

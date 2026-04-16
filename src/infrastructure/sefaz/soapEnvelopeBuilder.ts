@@ -1,7 +1,20 @@
-export function buildDistDFeEnvelope({ cnpj, ufAutora, ambiente, dist }) {
-  const distNode = dist.type === 'consNSU'
-    ? `<consNSU><NSU>${dist.value}</NSU></consNSU>`
-    : `<distNSU><ultNSU>${dist.value}</ultNSU></distNSU>`;
+interface DistParam {
+  type: 'consNSU' | 'distNSU';
+  value: string;
+}
+
+interface BuildDistDFeEnvelopeParams {
+  cnpj: string;
+  ufAutora: string;
+  ambiente: string;
+  dist: DistParam;
+}
+
+export function buildDistDFeEnvelope({ cnpj, ufAutora, ambiente, dist }: BuildDistDFeEnvelopeParams): string {
+  const distNode =
+    dist.type === 'consNSU'
+      ? `<consNSU><NSU>${dist.value}</NSU></consNSU>`
+      : `<distNSU><ultNSU>${dist.value}</ultNSU></distNSU>`;
 
   const nfeDadosMsg =
     `<distDFeInt xmlns="http://www.portalfiscal.inf.br/nfe" versao="1.01">` +
@@ -25,9 +38,6 @@ export function buildDistDFeEnvelope({ cnpj, ufAutora, ambiente, dist }) {
   );
 }
 
-function escapeXml(xml) {
-  return xml
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+function escapeXml(xml: string): string {
+  return xml.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
