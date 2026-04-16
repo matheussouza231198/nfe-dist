@@ -1,9 +1,27 @@
 import { decodeDocZip } from '../infrastructure/parser/docZipParser.js';
 import { detectarTipoDocumento } from '../infrastructure/parser/xmlTipoDetector.js';
 import { extrairChaveNfe } from '../infrastructure/parser/chaveExtractor.js';
+import type { Logger } from '../infrastructure/logging/logger.js';
+import type { DistResponse, SefazSoapClient } from '../infrastructure/sefaz/sefazSoapClient.js';
+import type { FileSystemNsuRepository } from '../infrastructure/storage/fileSystemNsuRepository.js';
+import type { FileSystemDocumentoRepository } from '../infrastructure/storage/fileSystemDocumentoRepository.js';
+
+interface ConsultarDistribuicaoDfeUseCaseParams {
+  sefazClient: SefazSoapClient;
+  nsuRepository: FileSystemNsuRepository;
+  documentoRepository: FileSystemDocumentoRepository;
+  logger: Logger;
+  retryMax: number;
+}
 
 export class ConsultarDistribuicaoDfeUseCase {
-  constructor({ sefazClient, nsuRepository, documentoRepository, logger, retryMax }) {
+  private sefazClient: SefazSoapClient;
+  private nsuRepository: FileSystemNsuRepository;
+  private documentoRepository: FileSystemDocumentoRepository;
+  private logger: Logger;
+  private retryMax: number;
+
+  constructor({ sefazClient, nsuRepository, documentoRepository, logger, retryMax }: ConsultarDistribuicaoDfeUseCaseParams) {
     this.sefazClient = sefazClient;
     this.nsuRepository = nsuRepository;
     this.documentoRepository = documentoRepository;
@@ -11,7 +29,7 @@ export class ConsultarDistribuicaoDfeUseCase {
     this.retryMax = retryMax;
   }
 
-  async executar(cnpj) {
+  async executar(cnpj: string): Promise<{ totalSalvos: number; ultNsu: string }> {
     let ultNsu = await this.nsuRepository.getUltNsu(cnpj);
     let totalSalvos = 0;
 
@@ -59,18 +77,19 @@ export class ConsultarDistribuicaoDfeUseCase {
     return { totalSalvos, ultNsu };
   }
 
-  async #withRetry(fn) {
-    let lastError;
+  async #withRetry(fn: () => Promise<DistResponse>): Promise<DistResponse> {
+    let lastError: unknown;
 
     for (let attempt = 1; attempt <= this.retryMax; attempt += 1) {
       try {
         return await fn();
       } catch (error) {
         lastError = error;
+        const message = error instanceof Error ? error.message : String(error);
         this.logger.warn('Falha na consulta SEFAZ, tentando novamente', {
           attempt,
           max: this.retryMax,
-          error: error.message
+          error: message
         });
 
         const waitMs = attempt * 1000;

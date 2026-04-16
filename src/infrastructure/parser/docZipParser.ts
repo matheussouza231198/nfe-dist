@@ -1,6 +1,6 @@
 import { gunzipSync } from 'zlib';
 
-export function decodeDocZip(docZipBase64) {
+export function decodeDocZip(docZipBase64: string): string {
   const buff = Buffer.from(docZipBase64, 'base64');
 
   try {

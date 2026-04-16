@@ -1,18 +1,31 @@
 import fs from 'fs/promises';
 import path from 'path';
+import type { TipoDocumento } from '../parser/xmlTipoDetector.js';
+
+interface SaveDocumentoParams {
+  cnpj: string;
+  chave: string | null;
+  tipo: TipoDocumento;
+  nsu: string;
+  xml: string;
+  data?: Date;
+}
 
 export class FileSystemDocumentoRepository {
-  constructor(storageDir) {
+  private storageDir: string;
+  private indexPath: string;
+
+  constructor(storageDir: string) {
     this.storageDir = storageDir;
     this.indexPath = path.join(storageDir, 'index.json');
   }
 
-  async existsByChave(cnpj, chave) {
+  async existsByChave(cnpj: string, chave: string): Promise<boolean> {
     const index = await this.#readIndex();
     return Boolean(index[`${cnpj}:${chave}`]);
   }
 
-  async save({ cnpj, chave, tipo, nsu, xml, data = new Date() }) {
+  async save({ cnpj, chave, tipo, nsu, xml, data = new Date() }: SaveDocumentoParams): Promise<string> {
     const yyyy = String(data.getUTCFullYear());
     const mm = String(data.getUTCMonth() + 1).padStart(2, '0');
     const dd = String(data.getUTCDate()).padStart(2, '0');
@@ -32,10 +45,10 @@ export class FileSystemDocumentoRepository {
     return fullPath;
   }
 
-  async #readIndex() {
+  async #readIndex(): Promise<Record<string, string>> {
     try {
       const text = await fs.readFile(this.indexPath, 'utf-8');
-      return JSON.parse(text);
+      return JSON.parse(text) as Record<string, string>;
     } catch {
       return {};
     }

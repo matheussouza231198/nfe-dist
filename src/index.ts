@@ -7,7 +7,7 @@ import { FileSystemNsuRepository } from './infrastructure/storage/fileSystemNsuR
 import { ConsultarDistribuicaoDfeUseCase } from './application/consultarDistribuicaoDfeUseCase.js';
 import { startScheduler } from './interfaces/scheduler.js';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   validateEnv();
 
   const httpsAgent = env.mock
@@ -47,7 +47,7 @@ async function bootstrap() {
   });
 }
 
-bootstrap().catch((error) => {
+bootstrap().catch((error: Error) => {
   logger.error('Falha fatal ao iniciar aplicação', { error: error.message });
   process.exit(1);
 });
